@@ -1,0 +1,75 @@
+<Project>
+  
+  <!-- Common properties for all projects -->
+  <PropertyGroup>
+    <LangVersion>7.3</LangVersion>
+    <Nullable>disable</Nullable>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    
+    <!-- Critical analyzer rules that should fail the build (in CI only by default) -->
+    <!-- Set MSBuildCI=true in CI environment or locally to enforce -->
+    <WarningsAsErrors Condition="'$(MSBuildCI)' == 'true'">
+      CA1305;CA1304;CA1310;CA1311;CA1816;CA1067;CA1036;
+      CA1806;CA1824;CA1860;CA1861;
+      AsyncFixer01;AsyncFixer02;AsyncFixer03
+    </WarningsAsErrors>
+    
+    <!-- Low priority rules that should remain as warnings -->
+    <WarningsNotAsErrors>
+      CA1707;CA1711;CA1712;CA1720;CA1822;CA1852;
+      CA1062;CA1303;CA2007
+    </WarningsNotAsErrors>
+    
+    <!-- Code analysis -->
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+
+    <!-- Disable SDK code style analyzers (IDE* rules) globally -->
+    <!-- The SDK's code style analyzers (Microsoft.CodeAnalysis.CSharp.CodeStyle.dll) -->
+    <!-- are incompatible with LangVersion 7.3 and cause CS8032 warnings -->
+    <!-- The CA* rules from EnableNETAnalyzers still work fine -->
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+
+    <!-- Analyzer settings -->
+    <RunAnalyzersDuringLiveAnalysis>true</RunAnalyzersDuringLiveAnalysis>
+  </PropertyGroup>
+
+  <!-- Exclude external interfaces from analysis -->
+  <ItemGroup>
+    <Compile Remove="**/MusicBeePluginInterface.cs" />
+    <None Include="**/MusicBeePluginInterface.cs" />
+  </ItemGroup>
+
+  <!-- Essential analyzers for code quality and security -->
+  <ItemGroup>
+    <!-- Microsoft Code Quality analyzers (FREE) - built into .NET 9 SDK, no need for package -->
+    <!-- <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="8.0.0"> -->
+    <!--   <PrivateAssets>all</PrivateAssets> -->
+    <!--   <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets> -->
+    <!-- </PackageReference> -->
+    
+    <!-- Security analyzers (FREE) -->
+    <PackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="3.3.4">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    
+    <!-- Async/await best practices (FREE) -->
+    <PackageReference Include="AsyncFixer" Version="1.6.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <!-- Optional: StyleCop for consistent style (uncomment if desired) -->
+  <!--
+  <ItemGroup>
+    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  -->
+
+</Project>

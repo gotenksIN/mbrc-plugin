@@ -1,0 +1,32 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# top-most EditorConfig file
+root = true
+
+# All files
+[*]
+indent_style = space
+
+# Code files
+[*.{cs,csx,vb,vbx}]
+indent_size = 4
+insert_final_newline = true
+charset = utf-8-bom
+
+# Suppress all code analysis warnings for MusicBeeInterface.cs
+# This is an external API file that should not be modified
+[MusicBeeInterface.cs]
+# Disable all CA rules for this file
+dotnet_analyzer_diagnostic.category-design.severity = none
+dotnet_analyzer_diagnostic.category-naming.severity = none
+dotnet_analyzer_diagnostic.category-usage.severity = none
+dotnet_analyzer_diagnostic.category-performance.severity = none
+dotnet_analyzer_diagnostic.category-reliability.severity = none
+dotnet_analyzer_diagnostic.category-security.severity = none
+
+# Or alternatively, disable specific rules
+dotnet_diagnostic.CA1707.severity = none  # Remove underscores
+dotnet_diagnostic.CA1711.severity = none  # Rename delegates/Ex suffix
+dotnet_diagnostic.CA1712.severity = none  # Don't prefix enum values
+dotnet_diagnostic.CA1720.severity = none  # Identifier contains type name
+dotnet_diagnostic.CA2211.severity = none  # Non-constant fields visible

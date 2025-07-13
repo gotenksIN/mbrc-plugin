@@ -4,12 +4,26 @@
     <TargetFramework>net48</TargetFramework>
     <OutputType>Exe</OutputType>
     <AssemblyName>firewall-utility</AssemblyName>
-    <RootNamespace>firewall_utility</RootNamespace>
+    <RootNamespace>FirewallUtility</RootNamespace>
     <LangVersion>7.3</LangVersion>
+
+    <!-- Assembly information -->
+    <AssemblyTitle>Firewall Utility</AssemblyTitle>
+    <AssemblyDescription>A small utility to automate the firewall port opening for MusicBee Remote</AssemblyDescription>
+    <AssemblyCompany>http://kelsos.net</AssemblyCompany>
+    <AssemblyProduct>firewall-utility</AssemblyProduct>
+    <AssemblyCopyright>Copyright © Konstantinos Paparas 2015</AssemblyCopyright>
+    <AssemblyVersion>1.0.14.0</AssemblyVersion>
+    <FileVersion>1.0.14.0</FileVersion>
+    <ComVisible>false</ComVisible>
+    <Guid>f79b8d74-c01a-4059-8997-46cc90a341e2</Guid>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+
+    <!-- Disable deprecated FxCop post-build analysis -->
+    <RunCodeAnalysis>false</RunCodeAnalysis>
 
     <!-- Output paths -->
     <OutputPath>..\build\bin\firewall-utility\$(Configuration)\</OutputPath>
-    <BaseIntermediateOutputPath>..\build\obj\firewall-utility\</BaseIntermediateOutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">

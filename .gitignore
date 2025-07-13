@@ -157,3 +157,10 @@ MB_REMOTE.XML
 
 app/MusicBee
 tools
+
+# Windows reserved device names (can appear as phantom files)
+nul
+NUL
+
+# Test results
+TestResults/

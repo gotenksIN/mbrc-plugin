@@ -1,7 +1,8 @@
-﻿namespace firewall_utility
+namespace FirewallUtility
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
     using System.Runtime.InteropServices;
 
@@ -43,7 +44,7 @@
 
                 var policyType = Type.GetTypeFromProgID("HNetCfg.FwPolicy2");
                 var firewallPolicy = (INetFwPolicy2)Activator.CreateInstance(policyType);
-                var portSt = portNumber.ToString();
+                var portSt = portNumber.ToString(CultureInfo.InvariantCulture);
                 var ruleType = Type.GetTypeFromProgID("HNetCfg.FwRule");
 
                 var existingRule = firewallPolicy.Rules.OfType<INetFwRule>().FirstOrDefault(x => x.Name == ruleName);
@@ -95,13 +96,15 @@
             if (args.Length == 2)
             {
                 var key = args[0];
-                int.TryParse(args[0 + 1], out var val);
-                dictionary.Add(key, val);
-
-                if (dictionary.TryGetValue(Socket, out var socketPort))
+                if (int.TryParse(args[1], out var val))
                 {
-                    CreateFirewallRuleForPort(socketPort, SocketRule);
-                    return;
+                    dictionary.Add(key, val);
+
+                    if (dictionary.TryGetValue(Socket, out var socketPort))
+                    {
+                        CreateFirewallRuleForPort(socketPort, SocketRule);
+                        return;
+                    }
                 }
             }
 

@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "mbrc-plugin": {
+      "commandName": "Executable",
+      "executablePath": "$(SolutionDir)app\\MusicBee\\MusicBee.exe",
+      "workingDirectory": "$(SolutionDir)app\\MusicBee",
+      "remoteDebugEnabled": false
+    }
+  }
+}

@@ -27,14 +27,16 @@
 
 * [About the Project](#about-the-project)
   * [Built With](#built-with)
+  * [Project Structure](#project-structure)
 * [Getting Started](#getting-started)
   * [Prerequisites](#prerequisites)
   * [Installation](#installation)
 * [Usage](#usage)
 * [Contributing](#contributing)
+* [Building](#building)
+* [Testing](#testing)
+* [Formatting](#formatting)
 * [License](#license)
-* [Contact](#contact)
-* [Acknowledgements](#acknowledgements)
 
 ## About the Project
 
@@ -53,8 +55,22 @@ calls of the MusicBee API.
 
 ### Built With
 
-* [ServiceStack.Text](https://github.com/ServiceStack/ServiceStack/tree/main/ServiceStack.Text)
-* [NLog](https://github.com/NLog/NLog)
+* [Autofac](https://github.com/autofac/Autofac) - Dependency Injection
+* [Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json) - JSON serialization
+* [NLog](https://github.com/NLog/NLog) - Logging
+
+### Project Structure
+
+```
+mbrc-plugin/
+├── core/             # Core library - business logic, services, protocol handling
+├── plugin/           # MusicBee plugin - API integration, adapters
+├── tests/            # Unit tests (xUnit, FluentAssertions, Moq)
+├── api-debugger/     # Protocol testing GUI utility
+└── firewall-utility/ # Windows firewall configuration tool
+```
+
+The `core` library is merged into `plugin` during build using ILRepack, producing a single `mb_remote.dll`.
 
 ## Getting Started
 
@@ -65,7 +81,9 @@ As a developer there are a few steps you need to follow to get started:
 
 ### Prerequisites
 
-The project requires [Visual Studio 2022 Community](https://visualstudio.microsoft.com/vs/community/) and MusicBee installed.
+* [Visual Studio 2022 Community](https://visualstudio.microsoft.com/vs/community/) (or later)
+* [.NET Framework 4.8](https://dotnet.microsoft.com/download/dotnet-framework/net48) SDK
+* [MusicBee](http://getmusicbee.com/) installed (for testing)
 
 After getting the basic environment setup you just need to clone the project from command line:
 
@@ -95,17 +113,63 @@ The contribution guide should follow soon.
 
 ## Building
 
-You can build the application either through Visual Studio or by running `build.bat`.
-The bat file supports either `Release` by default or `Debug` configurations.
+You can build the application using any of these methods:
 
-It will also copy the merged `mb_remote.dll` to the MusicBee plugin's folder.
+**Visual Studio:**
+Open `MBRC.sln` and build the solution.
+
+**Command Line:**
+```bash
+dotnet build -c Release
+```
+
+**Build Script (Windows):**
+```bash
+build.bat          # Release build (default)
+build.bat Debug    # Debug build
+```
+
+The build process:
+1. Compiles `core` and `plugin` projects
+2. Uses ILRepack to merge `MusicBeeRemote.Core.dll` into `mb_remote.dll`
+3. In Debug mode, copies `mb_remote.dll` to MusicBee's Plugins folder
+
+## Testing
+
+The test project uses xUnit with FluentAssertions and Moq:
+
+```bash
+dotnet test tests/MusicBeeRemote.Core.Tests.csproj
+```
+
+Note: Tests require Windows to run (net48 target framework).
+
+## Formatting
+
+The project uses [EditorConfig](https://editorconfig.org/) for consistent code formatting. Most IDEs support EditorConfig natively or via plugins.
+
+**Check formatting:**
+```bash
+dotnet format --verify-no-changes
+```
+
+**Apply formatting:**
+```bash
+dotnet format
+```
+
+**Key style rules:**
+- 4 spaces indentation for C# files
+- Braces on new lines (Allman style)
+- Sort `System` usings first
+- Use explicit types for built-in types, `var` when type is apparent
 
 ## License
 
 The source code of the application is licensed under the [GPLv3](https://www.gnu.org/licenses/gpl.html) license. See `LICENSE` for more information
 
     MusicBee Remote (Plugin for MusicBee)
-    Copyright (C) 2011-2023  Konstantinos Paparas
+    Copyright (C) 2011-2026  Konstantinos Paparas
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

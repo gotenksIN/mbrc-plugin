@@ -10,12 +10,17 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-    
+
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: setup MSBuild
         uses: microsoft/setup-msbuild@v2
+
+      - name: setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
 
       - name: setup NuGet
         uses: nuget/setup-nuget@v2
@@ -23,18 +28,49 @@ jobs:
       - name: restore packages
         run: nuget restore MBRC.sln -OutputDirectory packages -NonInteractive
 
-      - name: build
-        run: msbuild MBRC.sln /p:Configuration="Release" /m /v:M /fl /nr:false
+      - name: check code formatting
+        run: |
+          echo "Checking code formatting..."
+          echo "Running dotnet format --exclude=firewall-utility --verify-no-changes"
+          dotnet format --exclude="firewall-utility" --verify-no-changes --verbosity normal
+          if ($LASTEXITCODE -ne 0) {
+            echo "❌ Code formatting issues found! Run 'dotnet format --exclude=firewall-utility' to fix them."
+            echo "Note: Some analyzer warnings (CA####) are expected and don't affect formatting."
+            exit 1
+          }
+          echo "✅ Code formatting is clean!"
+
+      - name: build with strict analysis
+        run: |
+          echo "🔍 Building with strict static analysis (warnings as errors)..."
+          msbuild MBRC.sln /p:Configuration="Release" /p:MSBuildCI="true" /m /v:M /fl /nr:false
+
+      - name: static analysis passed
+        run: |
+          echo "✅ Static Analysis Passed!"
+          echo "All critical analyzer rules passed validation."
+          echo "Build completed with only low-priority warnings (if any)."
+
+      - name: run tests with coverage
+        run: |
+          dotnet test tests/MusicBeeRemote.Core.Tests.csproj --configuration Release --collect:"XPlat Code Coverage" --results-directory ./TestResults
+
+      - name: upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ./TestResults
+          fail_ci_if_error: false
+          verbose: true
 
       - name: copy to dist
         run: |
           mkdir -p build/dist
-          cp build/bin/plugin/Release/mb_remote.dll build/dist
-          cp build/bin/firewall-utility/Release/firewall-utility.exe build/dist
+          cp build/bin/plugin/Release/net48/mb_remote.dll build/dist
+          cp build/bin/firewall-utility/Release/net48/firewall-utility.exe build/dist
           cp LICENSE build/dist
 
       - uses: actions/upload-artifact@v4
         with:
           name: mbrc-plugin-dev
           path: build/dist
-          

@@ -1,0 +1,124 @@
+name: nightly
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+  workflow_dispatch:     # Allow manual trigger
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.check.outputs.should_build }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Check if nightly needed
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Get last successful nightly workflow run
+          LAST_RUN=$(gh run list --workflow=nightly.yml --status=success --limit=1 --json createdAt,headSha -q '.[0]')
+
+          if [ -z "$LAST_RUN" ] || [ "$LAST_RUN" = "null" ]; then
+            echo "No previous successful nightly found, should build"
+            echo "should_build=true" >> $GITHUB_OUTPUT
+            echo "version=$(date +%Y%m%d)" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          LAST_RUN_DATE=$(echo "$LAST_RUN" | jq -r '.createdAt')
+          LAST_RUN_SHA=$(echo "$LAST_RUN" | jq -r '.headSha')
+
+          echo "Last successful nightly: $LAST_RUN_DATE (SHA: $LAST_RUN_SHA)"
+
+          # Check if last run is older than 7 days
+          LAST_RUN_EPOCH=$(date -d "$LAST_RUN_DATE" +%s)
+          CURRENT_EPOCH=$(date +%s)
+          SEVEN_DAYS=$((7 * 24 * 60 * 60))
+          DAYS_AGO=$(( (CURRENT_EPOCH - LAST_RUN_EPOCH) / 86400 ))
+
+          echo "Last nightly was $DAYS_AGO days ago"
+
+          if [ $((CURRENT_EPOCH - LAST_RUN_EPOCH)) -lt $SEVEN_DAYS ]; then
+            echo "Last nightly is less than 7 days old, skipping"
+            echo "should_build=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Check if there are new commits since last run
+          COMMITS_SINCE=$(git rev-list --count "$LAST_RUN_SHA"..HEAD 2>/dev/null || echo "999")
+
+          if [ "$COMMITS_SINCE" -eq 0 ]; then
+            echo "No new commits since last nightly, skipping"
+            echo "should_build=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "Nightly needed: $COMMITS_SINCE new commits, last nightly is $DAYS_AGO days old"
+          echo "should_build=true" >> $GITHUB_OUTPUT
+          echo "version=$(date +%Y%m%d)" >> $GITHUB_OUTPUT
+
+  build:
+    needs: check
+    if: needs.check.outputs.should_build == 'true'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: setup NuGet
+        uses: nuget/setup-nuget@v2
+
+      - name: restore packages
+        run: nuget restore MBRC.sln -OutputDirectory packages -NonInteractive
+
+      - name: build
+        run: |
+          $version = "${{ needs.check.outputs.version }}"
+          msbuild MBRC.sln /p:Configuration="Release" /p:VersionSuffix="-nightly.$version" /m /v:M /nr:false
+
+      - name: prepare artifacts
+        run: |
+          mkdir -p build/dist
+          cp build/bin/plugin/Release/net48/mb_remote.dll build/dist
+          cp build/bin/firewall-utility/Release/net48/firewall-utility.exe build/dist
+          cp LICENSE build/dist
+          cp installer/README.txt build/dist
+
+      - name: install NSIS
+        run: choco install nsis -y
+
+      - name: get version prefix
+        id: version_prefix
+        run: |
+          $xml = [xml](Get-Content Directory.Build.props)
+          $prefix = $xml.Project.PropertyGroup.VersionPrefix
+          echo "PREFIX=$prefix" >> $env:GITHUB_OUTPUT
+
+      - name: build installer
+        run: |
+          $version = "${{ steps.version_prefix.outputs.PREFIX }}-nightly.${{ needs.check.outputs.version }}"
+          $env:PLUGIN_VERSION = $version
+          & "C:\Program Files (x86)\NSIS\makensis.exe" installer\MusicBeeRemote.nsi
+          mv "installer\musicbee_remote_$version.exe" "build\dist\"
+
+      - name: create zip
+        run: |
+          $version = "${{ steps.version_prefix.outputs.PREFIX }}-nightly.${{ needs.check.outputs.version }}"
+          Compress-Archive -Path "build\dist\mb_remote.dll", "build\dist\firewall-utility.exe", "build\dist\LICENSE", "build\dist\README.txt" -DestinationPath "build\dist\musicbee_remote_$version.zip"
+
+      - name: upload artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: nightly-${{ needs.check.outputs.version }}
+          path: |
+            build/dist/*.exe
+            build/dist/*.zip
+          retention-days: 7

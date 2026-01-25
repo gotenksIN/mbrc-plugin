@@ -13,8 +13,13 @@
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <Deterministic>true</Deterministic>
 
-    <!-- Disable auto-generation of assembly attributes to avoid conflicts -->
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <!-- Version attributes are generated from Directory.Build.props -->
+    <!-- Other attributes come from Properties/AssemblyInfo.cs -->
+    <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
+    <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+    <GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
 
     <!-- Output paths -->
     <OutputPath>bin\$(Configuration)\</OutputPath>

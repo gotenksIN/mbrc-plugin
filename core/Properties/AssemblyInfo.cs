@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Kelsos")]
 [assembly: AssemblyProduct("MusicBee Remote Control")]
-[assembly: AssemblyCopyright("Copyright © Konstantinos Paparas (kelsos) 2015-2021")]
+[assembly: AssemblyCopyright("Copyright (C) 2011-2026 Konstantinos Paparas (kelsos)")]
 [assembly: AssemblyTrademark("kelsos")]
 [assembly: AssemblyCulture("")]
 
@@ -17,4 +17,4 @@ using System.Runtime.InteropServices;
 
 [assembly: Guid("d2bcebd9-7c33-5918-cca4-e1348def85d2")]
 
-[assembly: AssemblyVersion("1.4.1")]
+// Version is set automatically from Directory.Build.props

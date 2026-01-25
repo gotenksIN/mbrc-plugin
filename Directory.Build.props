@@ -1,6 +1,29 @@
 <Project>
-  
-  <!-- Common properties for all projects -->
+
+  <!-- ============================================== -->
+  <!-- VERSION CONFIGURATION                          -->
+  <!-- ============================================== -->
+  <!-- Bump this version before creating a release tag -->
+  <PropertyGroup>
+    <VersionPrefix>1.5.0</VersionPrefix>
+    <!-- VersionSuffix is set by CI for nightlies (e.g., -nightly.123) -->
+    <!-- For releases, CI sets the full Version from the tag -->
+
+    <!-- Shared assembly information -->
+    <Company>Kelsos</Company>
+    <Authors>Konstantinos Paparas</Authors>
+    <Copyright>Copyright (C) 2011-$([System.DateTime]::Now.Year) Konstantinos Paparas (kelsos)</Copyright>
+    <Product>MusicBee Remote</Product>
+
+    <!-- Generate version attributes automatically -->
+    <GenerateAssemblyVersionAttribute>true</GenerateAssemblyVersionAttribute>
+    <GenerateAssemblyFileVersionAttribute>true</GenerateAssemblyFileVersionAttribute>
+    <GenerateAssemblyInformationalVersionAttribute>true</GenerateAssemblyInformationalVersionAttribute>
+  </PropertyGroup>
+
+  <!-- ============================================== -->
+  <!-- COMMON BUILD PROPERTIES                        -->
+  <!-- ============================================== -->
   <PropertyGroup>
     <LangVersion>7.3</LangVersion>
     <Nullable>disable</Nullable>

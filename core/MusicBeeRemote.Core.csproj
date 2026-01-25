@@ -14,8 +14,14 @@
     <!-- Enable automatic file inclusion -->
     <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
 
-    <!-- Disable auto-generation of assembly attributes -->
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <!-- Version attributes are generated from Directory.Build.props -->
+    <!-- Other attributes come from Properties/AssemblyInfo.cs -->
+    <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
+    <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+    <GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
   </PropertyGroup>
 
   <!-- net48 specific settings -->

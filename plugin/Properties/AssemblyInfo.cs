@@ -11,7 +11,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Kelsos")]
 [assembly: AssemblyProduct("MusicBee Remote Control")]
-[assembly: AssemblyCopyright("Copyright © Konstantinos Paparas (kelsos) 2015-2021")]
+[assembly: AssemblyCopyright("Copyright (C) 2011-2026 Konstantinos Paparas (kelsos)")]
 [assembly: AssemblyTrademark("kelsos")]
 [assembly: AssemblyCulture("")]
 
@@ -25,18 +25,7 @@ using System.Runtime.InteropServices;
 
 [assembly: Guid("c1acdbd8-6b22-4807-bba3-d0237ccd74c1")]
 
-// Version information for an assembly consists of the following four values:
-//
-//      Major Version
-//      Minor Version 
-//      Build Number
-//      Revision
-//
-// You can specify all the values or you can default the Build and Revision Numbers 
-// by using the '*' as shown below:
-// [assembly: AssemblyVersion("1.0.*")]
-
-[assembly: AssemblyVersion("1.4.1")]
+// Version is set automatically from Directory.Build.props
 
 // Specify the neutral language for resources
 [assembly: NeutralResourcesLanguage("en")]

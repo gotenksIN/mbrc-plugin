@@ -1,3 +1,4 @@
+[![CI](https://github.com/musicbeeremote/mbrc-plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/musicbeeremote/mbrc-plugin/actions/workflows/ci.yml)
 [![Discord](https://img.shields.io/discord/420977901215678474.svg?style=popout)](https://discordapp.com/invite/rceTb57)
 
 <br/>
@@ -28,14 +29,15 @@
 * [About the Project](#about-the-project)
   * [Built With](#built-with)
   * [Project Structure](#project-structure)
+* [Installation](#installation)
 * [Getting Started](#getting-started)
   * [Prerequisites](#prerequisites)
-  * [Installation](#installation)
 * [Usage](#usage)
 * [Contributing](#contributing)
 * [Building](#building)
 * [Testing](#testing)
 * [Formatting](#formatting)
+* [Releasing](#releasing)
 * [License](#license)
 
 ## About the Project
@@ -72,10 +74,36 @@ mbrc-plugin/
 
 The `core` library is merged into `plugin` during build using ILRepack, producing a single `mb_remote.dll`.
 
-## Getting Started
+## Installation
 
-If you are an end user you can download the plugin from [releases](https://github.com/musicbeeremote/mbrc-plugin/releases).
-You can find an installer for a regular installation of MusicBee along with a zip that can be used with the store version.
+Download the latest version from [releases](https://github.com/musicbeeremote/mbrc-plugin/releases).
+
+### Installer (Recommended)
+
+1. Download `musicbee_remote_x.x.x.exe`
+2. Run the installer
+3. The installer will automatically detect your MusicBee installation and install the plugin
+4. Restart MusicBee if it was running
+
+**Note:** The installer requires MusicBee 3.1 or later.
+
+### Manual Installation (ZIP)
+
+Use this method for the Microsoft Store version of MusicBee or if you prefer manual installation:
+
+1. Download `musicbee_remote_x.x.x.zip`
+2. Extract the contents
+3. Copy `mb_remote.dll` to your MusicBee Plugins folder:
+   - Regular installation: `C:\Program Files (x86)\MusicBee\Plugins\`
+   - Store version: `%LOCALAPPDATA%\Packages\...\LocalCache\Roaming\MusicBee\Plugins\`
+4. Optionally copy `firewall-utility.exe` if you need to configure Windows Firewall
+5. Restart MusicBee
+
+### Verify Installation
+
+After installation, the plugin should appear in MusicBee under `Edit > Preferences > Plugins`.
+
+## Getting Started
 
 As a developer there are a few steps you need to follow to get started:
 
@@ -163,6 +191,51 @@ dotnet format
 - Braces on new lines (Allman style)
 - Sort `System` usings first
 - Use explicit types for built-in types, `var` when type is apparent
+
+## Releasing
+
+Releases are automated via GitHub Actions when a version tag is pushed.
+
+### Version Management
+
+The version is centralized in `Directory.Build.props`:
+
+```xml
+<VersionPrefix>1.5.0</VersionPrefix>
+```
+
+All projects (plugin, core, firewall-utility, api-debugger) inherit this version automatically.
+
+### Creating a Release
+
+1. **Update the version** in `Directory.Build.props`
+2. **Update `CHANGELOG.md`** with release notes
+3. **Commit the changes:**
+   ```bash
+   git add Directory.Build.props CHANGELOG.md
+   git commit -m "chore: bump version to 1.5.0"
+   git push
+   ```
+4. **Create and push a tag:**
+   ```bash
+   git tag v1.5.0
+   git push origin v1.5.0
+   ```
+
+The CI pipeline will automatically:
+- Build the plugin with the tagged version
+- Create the NSIS installer (`musicbee_remote_1.5.0.exe`)
+- Create the ZIP archive (`musicbee_remote_1.5.0.zip`)
+- Generate SHA512 checksums
+- Create build provenance attestations
+- Publish a GitHub Release with all artifacts
+
+### Development Builds
+
+Commits to `main` branch produce development builds with version suffix:
+- Example: `1.5.0-nightly.123` (where 123 is the build number)
+
+These are available as workflow artifacts but not published as releases.
 
 ## License
 

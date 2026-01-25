@@ -1,8 +1,9 @@
-﻿name: ci
+name: ci
 
 on:
   push:
     branches: [ main ]
+    tags: [ 'v*' ]
   pull_request:
     branches: [ main ]
 
@@ -18,7 +19,7 @@ jobs:
         uses: microsoft/setup-msbuild@v2
 
       - name: setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '9.0.x'
 
@@ -27,6 +28,21 @@ jobs:
 
       - name: restore packages
         run: nuget restore MBRC.sln -OutputDirectory packages -NonInteractive
+
+      - name: determine version
+        id: version
+        run: |
+          if ("${{ github.ref }}".StartsWith("refs/tags/v")) {
+            $version = "${{ github.ref_name }}" -replace '^v', ''
+            echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+            echo "VERSION_ARGS=/p:Version=$version" >> $env:GITHUB_OUTPUT
+            echo "Building release version: $version"
+          } else {
+            # For non-tag builds, use VersionPrefix from Directory.Build.props with nightly suffix
+            $suffix = "nightly.${{ github.run_number }}"
+            echo "VERSION_ARGS=/p:VersionSuffix=$suffix" >> $env:GITHUB_OUTPUT
+            echo "Building development version with suffix: $suffix"
+          }
 
       - name: check code formatting
         run: |
@@ -43,7 +59,7 @@ jobs:
       - name: build with strict analysis
         run: |
           echo "🔍 Building with strict static analysis (warnings as errors)..."
-          msbuild MBRC.sln /p:Configuration="Release" /p:MSBuildCI="true" /m /v:M /fl /nr:false
+          msbuild MBRC.sln /p:Configuration="Release" /p:MSBuildCI="true" ${{ steps.version.outputs.VERSION_ARGS }} /m /v:M /fl /nr:false
 
       - name: static analysis passed
         run: |
@@ -70,7 +86,98 @@ jobs:
           cp build/bin/firewall-utility/Release/net48/firewall-utility.exe build/dist
           cp LICENSE build/dist
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: mbrc-plugin-dev
           path: build/dist
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: windows-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: download build artifacts
+        uses: actions/download-artifact@v6
+        with:
+          name: mbrc-plugin-dev
+          path: build/dist
+
+      - name: set version from tag
+        id: version
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $version = $tag -replace '^v', ''
+          echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+          echo "Version: $version"
+
+      - name: install NSIS
+        run: choco install nsis -y
+
+      - name: build installer
+        run: |
+          $env:PLUGIN_VERSION = "${{ steps.version.outputs.VERSION }}"
+          & "C:\Program Files (x86)\NSIS\makensis.exe" installer\MusicBeeRemote.nsi
+
+      - name: move installer to dist
+        run: |
+          $version = "${{ steps.version.outputs.VERSION }}"
+          mv "installer\musicbee_remote_$version.exe" "build\dist\"
+
+      - name: create zip archive
+        run: |
+          $version = "${{ steps.version.outputs.VERSION }}"
+          cp installer\README.txt build\dist\
+          Compress-Archive -Path "build\dist\mb_remote.dll", "build\dist\firewall-utility.exe", "build\dist\LICENSE", "build\dist\README.txt" -DestinationPath "build\dist\musicbee_remote_$version.zip"
+
+      - name: generate checksums
+        run: |
+          $version = "${{ steps.version.outputs.VERSION }}"
+          cd build\dist
+          (Get-FileHash -Algorithm SHA512 "musicbee_remote_$version.exe").Hash.ToLower() + "  musicbee_remote_$version.exe" | Out-File -Encoding ascii "musicbee_remote_$version.exe.sha512"
+          (Get-FileHash -Algorithm SHA512 "musicbee_remote_$version.zip").Hash.ToLower() + "  musicbee_remote_$version.zip" | Out-File -Encoding ascii "musicbee_remote_$version.zip.sha512"
+
+      - name: attest build provenance (exe)
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: build/dist/musicbee_remote_${{ steps.version.outputs.VERSION }}.exe
+
+      - name: attest build provenance (zip)
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: build/dist/musicbee_remote_${{ steps.version.outputs.VERSION }}.zip
+
+      - name: create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/dist/musicbee_remote_${{ steps.version.outputs.VERSION }}.exe
+            build/dist/musicbee_remote_${{ steps.version.outputs.VERSION }}.exe.sha512
+            build/dist/musicbee_remote_${{ steps.version.outputs.VERSION }}.zip
+            build/dist/musicbee_remote_${{ steps.version.outputs.VERSION }}.zip.sha512
+          generate_release_notes: true
+          body: |
+            See the [CHANGELOG](https://github.com/musicbeeremote/mbrc-plugin/blob/main/CHANGELOG.md) for details.
+
+            ## MusicBee Microsoft Store version
+
+            If you are using the Microsoft Store version of MusicBee, install the plugin using the zip file.
+
+            Go to MusicBee -> Edit -> Preferences -> Plugins and use the "Add Plugin" button to install directly from the zip file.
+
+            ## Verify integrity
+
+            To verify the downloaded file integrity you can use Windows PowerShell:
+
+            ```powershell
+            cd Downloads
+            Get-FileHash -Path .\musicbee_remote_${{ steps.version.outputs.VERSION }}.exe -Algorithm SHA512
+            ```
+
+            Ensure that the Hash matches the one in the corresponding `.sha512` file.

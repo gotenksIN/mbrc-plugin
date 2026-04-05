@@ -272,35 +272,82 @@ namespace MusicBeePlugin.DataProviders
 
         public IEnumerable<NowPlaying> GetNowPlayingListPage(int offset, int limit)
         {
-            if (!_api.NowPlayingList_QueryFiles(null))
-                yield break;
+            var isShuffle = _api.Player_GetShuffle();
 
-            var position = 1;
-            while (true)
+            if (isShuffle)
             {
-                var trackPath = _api.NowPlayingList_QueryGetNextFile();
-                if (string.IsNullOrEmpty(trackPath))
-                    break;
+                // When shuffle is true, return tracks in upcoming playback sequence
+                var position = 1;
+                var itemIndex = _api.NowPlayingList_GetCurrentIndex();
+                var seenIndices = new HashSet<int>();
 
-                // Use bulk API for efficiency
-                var fields = new[] { Plugin.MetaDataType.Artist, Plugin.MetaDataType.TrackTitle };
-                var results = new string[2];
-                var success = _api.Library_GetFileTags(trackPath, fields, out results);
+                // Ensure we can query URLs
+                if (!_api.NowPlayingList_QueryFiles(null))
+                    yield break;
 
-                var artist = SafeGetResult(success, results, 0);
-                var title = SafeGetResult(success, results, 1);
-
-                if (string.IsNullOrEmpty(title))
-                    title = Path.GetFileName(trackPath);
-
-                yield return new NowPlaying
+                while (itemIndex >= 0 && !seenIndices.Contains(itemIndex))
                 {
-                    Artist = string.IsNullOrEmpty(artist) ? "Unknown Artist" : artist,
-                    Title = title,
-                    Position = position,
-                    Path = trackPath
-                };
-                position++;
+                    seenIndices.Add(itemIndex);
+
+                    var trackPath = _api.NowPlayingList_GetListFileUrl(itemIndex);
+                    if (string.IsNullOrEmpty(trackPath))
+                        break;
+
+                    // Use bulk API for efficiency
+                    var fields = new[] { Plugin.MetaDataType.Artist, Plugin.MetaDataType.TrackTitle };
+                    var results = new string[2];
+                    var success = _api.Library_GetFileTags(trackPath, fields, out results);
+
+                    var artist = SafeGetResult(success, results, 0);
+                    var title = SafeGetResult(success, results, 1);
+
+                    if (string.IsNullOrEmpty(title))
+                        title = Path.GetFileName(trackPath);
+
+                    yield return new NowPlaying
+                    {
+                        Artist = string.IsNullOrEmpty(artist) ? "Unknown Artist" : artist,
+                        Title = title,
+                        Position = itemIndex + 1, // Use actual 1-based UI index for proper playback requests
+                        Path = trackPath
+                    };
+
+                    itemIndex = _api.NowPlayingList_GetNextIndex(position);
+                    position++;
+                }
+            }
+            else
+            {
+                if (!_api.NowPlayingList_QueryFiles(null))
+                    yield break;
+
+                var position = 1;
+                while (true)
+                {
+                    var trackPath = _api.NowPlayingList_QueryGetNextFile();
+                    if (string.IsNullOrEmpty(trackPath))
+                        break;
+
+                    // Use bulk API for efficiency
+                    var fields = new[] { Plugin.MetaDataType.Artist, Plugin.MetaDataType.TrackTitle };
+                    var results = new string[2];
+                    var success = _api.Library_GetFileTags(trackPath, fields, out results);
+
+                    var artist = SafeGetResult(success, results, 0);
+                    var title = SafeGetResult(success, results, 1);
+
+                    if (string.IsNullOrEmpty(title))
+                        title = Path.GetFileName(trackPath);
+
+                    yield return new NowPlaying
+                    {
+                        Artist = string.IsNullOrEmpty(artist) ? "Unknown Artist" : artist,
+                        Title = title,
+                        Position = position,
+                        Path = trackPath
+                    };
+                    position++;
+                }
             }
         }
 

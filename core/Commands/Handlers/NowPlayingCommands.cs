@@ -731,6 +731,13 @@ namespace MusicBeePlugin.Commands.Handlers
                     playerStatus,
                     context.ConnectionId);
 
+                // Send playback position
+                var playbackPosition = _trackDataProvider.GetPlaybackPosition();
+                _eventAggregator.PublishMessage(
+                    ProtocolConstants.NowPlayingPosition,
+                    playbackPosition,
+                    context.ConnectionId);
+
                 // Broadcast cover to all clients
                 var cover = _trackDataProvider.GetNowPlayingArtwork();
                 if (!string.IsNullOrEmpty(cover))
